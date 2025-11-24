@@ -35,11 +35,14 @@ This project sets up a Python-based agent that ingests manga pages (PNG, JPG, an
 ```
 GEMINI_API_KEY=your_key_here
 GEMINI_MODEL=gemini-1.5-flash
-OCR_LANG=jpn
+OCR_LANG=eng
+OCR_AUTO_LANGS=eng+jpn
 TARGET_LANGUAGE=he
 ```
 
 Optional knobs include `OUTPUT_DIR`, `TRANSLATION_BATCH_SIZE`, `FONT_PATH`, `FONT_SIZE`, and `BUBBLE_PADDING`.
+
+Set `OCR_LANG` to `eng` for English-only pages (default). To let Tesseract attempt multiple languages, either put a `+`-separated list such as `eng+jpn` or use `OCR_LANG=auto` and configure `OCR_AUTO_LANGS` with the language mix you installed (for example `eng+jpn+kor`).
 
 ## Usage
 

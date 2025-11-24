@@ -49,13 +49,33 @@ class OCRService:
             shutil.copy2(input_path, target)
         return [target]
 
+    def _language_candidates(self) -> List[str]:
+        hint = (self.settings.language_hint or "").strip()
+        if not hint:
+            return ["eng"]
+        if hint.lower() == "auto":
+            # Try configured auto languages first, then fall back to English-only.
+            auto_value = self.settings.auto_languages.strip() or "eng"
+            return [auto_value, "eng"]
+        return [hint]
+
     def _extract_single(self, image_path: Path, page_index: int) -> PageExtraction:
         image = Image.open(image_path).convert("RGB")
         config = "--psm 6"
-        data = pytesseract.image_to_data(image, lang=self.settings.language_hint, config=config)
-        regions = self._parse_tesseract_output(data)
-        LOGGER.info("Page %s: captured %s text regions", page_index, len(regions))
-        return PageExtraction(page_index=page_index, image_path=image_path, regions=regions)
+        last_error: pytesseract.TesseractError | None = None
+        for lang in self._language_candidates():
+            try:
+                data = pytesseract.image_to_data(image, lang=lang, config=config)
+            except pytesseract.TesseractError as err:  # Missing language data or OCR failure.
+                last_error = err
+                LOGGER.warning("Tesseract failed with lang '%s': %s", lang, err)
+                continue
+            regions = self._parse_tesseract_output(data)
+            LOGGER.info("Page %s (%s): captured %s text regions", page_index, lang, len(regions))
+            return PageExtraction(page_index=page_index, image_path=image_path, regions=regions)
+        if last_error:
+            raise last_error
+        raise RuntimeError("OCR failed for all configured languages.")
 
     def _parse_tesseract_output(self, data: str) -> List[TextRegion]:
         lines = data.splitlines()

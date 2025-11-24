@@ -16,7 +16,8 @@ class GeminiSettings(BaseModel):
 
 
 class OCRSettings(BaseModel):
-    language_hint: str = Field(default="jpn", description="Source OCR language code")
+    language_hint: str = Field(default="eng", description="Primary OCR language code or 'auto'")
+    auto_languages: str = Field(default="eng+jpn", description="Languages string used when language_hint=auto")
     dpi: int = Field(default=300, ge=72, le=600)
     tesseract_cmd: Optional[str] = Field(default=None, description="Optional absolute path to tesseract executable")
     poppler_path: Optional[Path] = Field(default=None, description="Optional path to Poppler bin directory")
@@ -56,7 +57,8 @@ class AppSettings(BaseModel):
             raise RuntimeError("GEMINI_API_KEY is required")
         model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
         output_dir = Path(os.getenv("OUTPUT_DIR", "outputs")).expanduser()
-        ocr_lang = os.getenv("OCR_LANG", "jpn")
+        ocr_lang = os.getenv("OCR_LANG", "eng")
+        ocr_auto_langs = os.getenv("OCR_AUTO_LANGS", "eng+jpn")
         tess_path = os.getenv("TESSERACT_CMD")
         poppler_env = os.getenv("POPPLER_PATH")
         poppler_path = Path(poppler_env).expanduser() if poppler_env else None
@@ -70,7 +72,12 @@ class AppSettings(BaseModel):
 
         return cls(
             gemini=GeminiSettings(api_key=api_key, model=model),
-            ocr=OCRSettings(language_hint=ocr_lang, tesseract_cmd=tess_path, poppler_path=poppler_path),
+            ocr=OCRSettings(
+                language_hint=ocr_lang,
+                auto_languages=ocr_auto_langs,
+                tesseract_cmd=tess_path,
+                poppler_path=poppler_path,
+            ),
             output=OutputSettings(out_dir=output_dir),
             processing=ProcessingSettings(target_language=target_language, batch_size=batch_size, max_chars_per_batch=max_chars),
             rendering=RenderingSettings(font_path=font_path, font_size=font_size, bubble_padding=bubble_padding),
