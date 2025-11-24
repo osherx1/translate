@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import tempfile
-from pathlib import Path
 import sys
-
-# Ensure project root is importable when Streamlit runs this file directly.
-ROOT_DIR = Path(__file__).resolve().parents[1]
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
+from pathlib import Path
 
 import streamlit as st
 
-from app.pipeline import MangaTranslationPipeline
-from app.models import TranslationJob
+try:
+    from app.pipeline import MangaTranslationPipeline
+    from app.models import TranslationJob
+except ModuleNotFoundError:  # Streamlit Cloud runs this file without repo root on sys.path
+    ROOT_DIR = Path(__file__).resolve().parents[1]
+    if str(ROOT_DIR) not in sys.path:
+        sys.path.insert(0, str(ROOT_DIR))
+    from app.pipeline import MangaTranslationPipeline
+    from app.models import TranslationJob
 
 
 def render_ui() -> None:
