@@ -68,3 +68,7 @@ def _init_pipeline() -> MangaTranslationPipeline | None:
             st.cache_resource.clear()
             st.experimental_rerun()
         return None
+
+
+# Streamlit executes the module top-to-bottom, so call the renderer at import time.
+render_ui()
